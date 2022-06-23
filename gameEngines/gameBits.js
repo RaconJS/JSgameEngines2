@@ -1,0 +1,1 @@
+"use strict";//can disable this "use strict"

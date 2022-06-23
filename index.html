@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+	<head>
+	<meta charset="utf-8">
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>coolgame</title>
+		<script src="basicEngines/images.js"></script>
+		<script src="basicEngines/sounds.js"></script>
+	</head>
+<body>
+	<script src="basicEngines/extraFunctions1.js"></script>
+	<script src="basicEngines/math.js"></script>
+	<script src="basicEngines/io.js"></script>
+	<script src="basicEngines/JSON++.js"></script>
+	<script src="gameEngines/gameLoop.js"></script>
+	<script src="gameEngines/gameBits.js"></script>
+	<!--
+		<script src="game/main.js"></script>
+	-->
+	<script src="game1.js"></script>
+	<script>//modeling osmosis
+	if(false){
+		window. DEBUG_UI=true;
+		window. TESTING=true;
+		let n=0;
+		var time1=0;
+		var sum=[0,0];
+		class Particle{
+			isSalt=((n++)%2==0);
+			c=[0,0].map((v,i)=>(Math.random()*(1+(i==1))+(i==0)*(1-(this.isSalt)))*Draw.center[i]);
+			dir=Math.random()*Math.TAU;
+			hadCol=false;//had collision
+			get size(){return size+this.isSalt*0;}
+		}
+		var nums=[0,0];//num of parts on one side
+		var nums1=[0,0];//num of parts on one side
+		var speed=100;
+		var size=10;
+		var parts=new Array(100).fill().map(v=>new Particle());
+		new MainGame.UpdateScript(l=>l.draw[14],(l,s)=>{
+			Draw.clear();
+			nums=[0,0];
+			nums1=[0,0];
+			for(let a of parts){
+				a.hadCol=false;
+			}
+			const reflect=(dir,arg)=>{let a=0
+				let vec=Math.rotate([1,0],dir-arg,0,1);
+				vec[0]=-Math.abs(vec[0]);
+				dir=Math.getAngle(vec,0,1)+arg;
+				return dir;
+			}
+			const move=a=>{
+				let mid=Draw.center;
+				let c1=Math.dif2(a.c,mid);
+				if(Math.abs(c1[0])+a.size>mid[0])
+					a.dir=reflect(a.dir,Math.TAU/2*(c1[0]<0));
+				if(Math.abs(c1[1])+a.size>mid[1])
+					a.dir=reflect(a.dir,Math.TAU*(1/4+1/2*(c1[1]<0)));
+				if(a.isSalt&&c1[0]+a.size>0)
+					a.dir=reflect(a.dir,0);
+				a.c=Math.addVec2(a.c,
+					Math.rotate(
+						[speed*MainGame.time.delta/parts.length,0],
+						a.dir,0,1
+					)
+				);
+			}
+			Draw.line(Draw.center[0],0,Draw.center[0],Draw.height,2,"grey");
+			for(let i=0;i< parts.length;i++){
+				let a=parts[i];
+				if(a.c[0]<Draw.center[0])nums[0]++;
+				else nums[1]++;
+				if(!a.isSalt){
+					if(a.c[0]<Draw.center[0])nums1[0]++;
+					else nums1[1]++;
+				}
+				ctx.save();{
+					ctx.translate(...a.c);
+					Draw.circle(0,0,a.size,["blue","green"][+a.isSalt]);
+					Draw.Text({size:7,text:a.dir.toFixed(2),font:defaultFont})();
+				}ctx.restore();
+				for(let j=i+1;j<parts.length;j++){
+					let b=parts[j];
+					let dif=Math.dif2(a.c,b.c);
+					if(Math.len2(dif)<a.size+b.size){
+						let arg=Math.getAngle(dif,0,1);
+						a.dir=reflect(a.dir,-arg);
+						b.dir=reflect(b.dir,arg);
+						a.hadCol=b.hadCol=true;
+					}
+					move(a);
+					move(b);
+				}
+				move(a);
+			}
+			Draw.Text({size:30,color:"#ffffffc0",text:nums,c:Draw.center.map((v,i)=>v*[1,0.2][i])})();
+			Draw.Text({size:30,color:"#11aaffc0",text:sum.map(v=>(v/time1).toFixed(2)),c:Draw.center.map((v,i)=>v*[1,0.4][i])})();
+			sum=sum.map((v,i)=>v+nums1[i]);
+			time1++;
+		}).attach();
+		var reset=()=>{time1=0;sum=[0,0];}
+		MainGame.start();
+	}
+	</script>
+</body>
+</html>
